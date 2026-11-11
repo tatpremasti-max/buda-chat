@@ -42,3 +42,5 @@ That URL is the public address of BUDA-CHAT. Put it in every pitch, essay, and e
 
 Vladimir Lermontov — independent researcher.
 Author of the Moment of Silence / BUDA-CHAT specification and a series of SSRN preprints on technology ethics.
+**Related work:** The Great Turn. Wheel of Civilizations: Architecture of a Shared Future. [Preprint]. Zenodo. DOI: 10.5281/zenodo.24100675
+
