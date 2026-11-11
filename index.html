@@ -45,13 +45,23 @@
     line-height:1.5;
     margin-bottom:12px;
   }
+  .quote-echo {
+    font-size:19px;
+    font-style:italic;
+    color:#b8bdc7;
+    max-width:640px;
+    line-height:1.5;
+    margin-top:28px;
+    margin-bottom:12px;
+  }
   .author {
     font-size:14px;
     letter-spacing:2px;
     color:#8a8f98;
     text-transform:uppercase;
-    margin-bottom:56px;
+    margin-bottom:24px;
   }
+  .author-last { margin-bottom:56px; }
   #bellBtn {
     background:transparent;
     border:1px solid #c9a45c;
@@ -66,6 +76,18 @@
   }
   #bellBtn:hover:not(:disabled) { background:#c9a45c; color:#0d1117; }
   #bellBtn:disabled { opacity:.4; cursor:default; }
+  #streamBtn {
+    background:transparent;
+    border:none;
+    color:#8a8f98;
+    font-family:inherit;
+    font-size:13px;
+    letter-spacing:2px;
+    margin-top:20px;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  #streamBtn:hover { color:#c9a45c; }
   #timer {
     font-size:32px;
     color:#c9a45c;
@@ -89,10 +111,14 @@
 <h1>Moment of Silence</h1>
 <p class="subtitle">One pause per day. Five minutes. No apps to configure, no data collected &mdash; the pause lives here, in this page, and ends with a bell.</p>
 
-<p class="quote">&ldquo;Do every act of your life as though it were the last act of your life.&rdquo;</p>
-<p class="author">&mdash; Marcus Aurelius</p>
+<p class="quote">古池や蛙飛び込む水の音<br>The old pond &mdash; / a frog jumps in, &mdash; / the sound of water.</p>
+<p class="author">&mdash; Bash&#333;, 1686</p>
+
+<p class="quote-echo">&ldquo;Do every act of your life as though it were the last act of your life.&rdquo;</p>
+<p class="author author-last">&mdash; Marcus Aurelius</p>
 
 <button id="bellBtn">RING THE BELL</button>
+<button id="streamBtn">STREAM: ON</button>
 <div id="timer"></div>
 
 <footer>
@@ -108,9 +134,12 @@
 (function(){
   var btn = document.getElementById('bellBtn');
   var timer = document.getElementById('timer');
+  var streamBtn = document.getElementById('streamBtn');
   var audioCtx = null;
   var DURATION = 300;
   var KEY = 'buda_chat_last_ring';
+  var streamGain = null;
+  var streamOn = true;
 
   function ring() {
     try {
@@ -130,6 +159,32 @@
     } catch(e) {}
   }
 
+  function startStream() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (streamGain) { streamGain.gain.value = 0.05; return; }
+      var size = 2 * audioCtx.sampleRate;
+      var buf = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+      var d = buf.getChannelData(0);
+      for (var i = 0; i < size; i++) d[i] = Math.random() * 2 - 1;
+      var src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      var f = audioCtx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = 800;
+      var g = audioCtx.createGain();
+      g.gain.value = 0.05;
+      src.connect(f); f.connect(g); g.connect(audioCtx.destination);
+      src.start();
+      streamGain = g;
+    } catch(e) {}
+  }
+
+  function stopStream() {
+    if (streamGain) streamGain.gain.value = 0;
+  }
+
   function fmt(s) {
     var m = Math.floor(s / 60);
     var r = s % 60;
@@ -137,6 +192,12 @@
   }
 
   function today() { return new Date().toDateString(); }
+
+  streamBtn.addEventListener('click', function(){
+    streamOn = !streamOn;
+    if (streamGain) streamGain.gain.value = streamOn ? 0.05 : 0;
+    streamBtn.textContent = 'STREAM: ' + (streamOn ? 'ON' : 'OFF');
+  });
 
   btn.addEventListener('click', function(){
     var last = localStorage.getItem(KEY);
@@ -148,6 +209,7 @@
     localStorage.setItem(KEY, t);
     btn.disabled = true;
     ring();
+    startStream();
     var left = DURATION;
     timer.textContent = fmt(left);
     var iv = setInterval(function(){
@@ -157,6 +219,7 @@
         timer.textContent = 'The bell has rung. The pause is complete.';
         ring();
         setTimeout(function(){
+          stopStream();
           btn.disabled = false;
           timer.textContent = '';
         }, 4000);
