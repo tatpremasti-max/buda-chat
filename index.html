@@ -76,7 +76,7 @@
   }
   #bellBtn:hover:not(:disabled) { background:#c9a45c; color:#0d1117; }
   #bellBtn:disabled { opacity:.4; cursor:default; }
-  #streamBtn {
+  #waterBtn {
     background:transparent;
     border:none;
     color:#8a8f98;
@@ -87,7 +87,7 @@
     cursor:pointer;
     text-transform:uppercase;
   }
-  #streamBtn:hover { color:#c9a45c; }
+  #waterBtn:hover { color:#c9a45c; }
   #timer {
     font-size:32px;
     color:#c9a45c;
@@ -111,14 +111,14 @@
 <h1>Moment of Silence</h1>
 <p class="subtitle">One pause per day. Five minutes. No apps to configure, no data collected &mdash; the pause lives here, in this page, and ends with a bell.</p>
 
-<p class="quote">古池や蛙飛び込む水の音<br>The old pond &mdash; / a frog jumps in, &mdash; / the sound of water.</p>
+<p class="quote">古池や蛙飛び込む水の音<br>The old pond.<br>A frog leaps into water &mdash;<br>A sound in the silence.</p>
 <p class="author">&mdash; Bash&#333;, 1686</p>
 
 <p class="quote-echo">&ldquo;Do every act of your life as though it were the last act of your life.&rdquo;</p>
 <p class="author author-last">&mdash; Marcus Aurelius</p>
 
 <button id="bellBtn">RING THE BELL</button>
-<button id="streamBtn">STREAM: ON</button>
+<button id="waterBtn">DROPS: ON</button>
 <div id="timer"></div>
 
 <footer>
@@ -134,12 +134,12 @@
 (function(){
   var btn = document.getElementById('bellBtn');
   var timer = document.getElementById('timer');
-  var streamBtn = document.getElementById('streamBtn');
+  var waterBtn = document.getElementById('waterBtn');
   var audioCtx = null;
   var DURATION = 300;
   var KEY = 'buda_chat_last_ring';
-  var streamGain = null;
-  var streamOn = true;
+  var waterOn = true;
+  var dropTimer = null;
 
   function ring() {
     try {
@@ -159,30 +159,41 @@
     } catch(e) {}
   }
 
-  function startStream() {
+  function drop() {
+    if (!waterOn || !audioCtx) return;
+    try {
+      var t = audioCtx.currentTime;
+      var osc = audioCtx.createOscillator();
+      var g = audioCtx.createGain();
+      var f = 600 + Math.random() * 800;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, t);
+      osc.frequency.exponentialRampToValueAtTime(f * 0.55, t + 0.12);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.06 + Math.random() * 0.05, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+      osc.connect(g).connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.5);
+    } catch(e) {}
+    dropTimer = setTimeout(drop, 700 + Math.random() * 2500);
+  }
+
+  function startWater() {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (streamGain) { streamGain.gain.value = 0.05; return; }
-      var size = 2 * audioCtx.sampleRate;
-      var buf = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
-      var d = buf.getChannelData(0);
-      for (var i = 0; i < size; i++) d[i] = Math.random() * 2 - 1;
-      var src = audioCtx.createBufferSource();
-      src.buffer = buf;
-      src.loop = true;
-      var f = audioCtx.createBiquadFilter();
-      f.type = 'lowpass';
-      f.frequency.value = 800;
-      var g = audioCtx.createGain();
-      g.gain.value = 0.05;
-      src.connect(f); f.connect(g); g.connect(audioCtx.destination);
-      src.start();
-      streamGain = g;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      waterOn = true;
+      waterBtn.textContent = 'DROPS: ON';
+      clearTimeout(dropTimer);
+      drop();
     } catch(e) {}
   }
 
-  function stopStream() {
-    if (streamGain) streamGain.gain.value = 0;
+  function stopWater() {
+    waterOn = false;
+    clearTimeout(dropTimer);
+    waterBtn.textContent = 'DROPS: OFF';
   }
 
   function fmt(s) {
@@ -193,10 +204,8 @@
 
   function today() { return new Date().toDateString(); }
 
-  streamBtn.addEventListener('click', function(){
-    streamOn = !streamOn;
-    if (streamGain) streamGain.gain.value = streamOn ? 0.05 : 0;
-    streamBtn.textContent = 'STREAM: ' + (streamOn ? 'ON' : 'OFF');
+  waterBtn.addEventListener('click', function(){
+    if (waterOn) { stopWater(); } else { startWater(); }
   });
 
   btn.addEventListener('click', function(){
@@ -209,7 +218,7 @@
     localStorage.setItem(KEY, t);
     btn.disabled = true;
     ring();
-    startStream();
+    startWater();
     var left = DURATION;
     timer.textContent = fmt(left);
     var iv = setInterval(function(){
@@ -219,7 +228,7 @@
         timer.textContent = 'The bell has rung. The pause is complete.';
         ring();
         setTimeout(function(){
-          stopStream();
+          stopWater();
           btn.disabled = false;
           timer.textContent = '';
         }, 4000);
