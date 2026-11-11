@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BUDA-CHAT — Moment of Silence</title>
+<meta name="description" content="A non-bypassable daily pause. Five minutes of silence, embedded in your day. Open specification, zero data collection.">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --ink: #e6edf3;
+    --ink-dim: #8b949e;
+    --gold: #d4af37;
+    --gold-soft: rgba(212, 175, 55, 0.25);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(ellipse at 50% -20%, #1c2333 0%, var(--bg) 60%);
+    color: var(--ink);
+    font-family: Georgia, 'Times New Roman', serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px;
+    text-align: center;
+  }
+  header { margin-top: 4vh; }
+  .brand {
+    font-size: 13px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  h1 {
+    margin-top: 12px;
+    font-weight: 400;
+    font-size: clamp(26px, 5vw, 42px);
+    letter-spacing: 0.02em;
+  }
+  .sub {
+    margin-top: 10px;
+    color: var(--ink-dim);
+    font-size: clamp(14px, 2.2vw, 17px);
+    max-width: 34em;
+    line-height: 1.6;
+  }
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 560px;
+  }
+  .maxim {
+    font-size: clamp(18px, 3vw, 24px);
+    font-style: italic;
+    line-height: 1.7;
+    margin-bottom: 8px;
+  }
+  .maxim-source {
+    color: var(--ink-dim);
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+  .bell-btn {
+    background: none;
+    border: 2px solid var(--gold);
+    color: var(--gold);
+    font-family: inherit;
+    font-size: clamp(16px, 2.4vw, 19px);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 18px 44px;
+    border-radius: 60px;
+    cursor: pointer;
+    transition: background 0.4s, box-shadow 0.4s, transform 0.2s;
+  }
+  .bell-btn:hover {
+    background: var(--gold-soft);
+    box-shadow: 0 0 40px var(--gold-soft);
+    transform: translateY(-1px);
+  }
+  .timer {
+    display: none;
+    font-size: clamp(64px, 14vw, 110px);
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .hint {
+    color: var(--ink-dim);
+    font-size: 14px;
+    margin-top: 20px;
+    display: none;
+    letter-spacing: 0.06em;
+  }
+  .done {
+    display: none;
+    font-size: clamp(20px, 3.4vw, 26px);
+    line-height: 1.6;
+    max-width: 30em;
+  }
+  .done .again {
+    margin-top: 28px;
+    display: block;
+    color: var(--ink-dim);
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  footer {
+    width: 100%;
+    max-width: 640px;
+    border-top: 1px solid rgba(139, 148, 158, 0.25);
+    padding-top: 18px;
+    color: var(--ink-dim);
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+  footer a { color: var(--gold); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">BUDA-CHAT</div>
+  <h1>Moment of Silence</h1>
+  <p class="sub">One pause per day. Five minutes. No apps to configure, no data collected — the pause lives here, in this page, and ends with a bell.</p>
+</header>
+
+<main>
+  <div id="idle">
+    <p class="maxim" id="maxim-text"></p>
+    <p class="maxim-source" id="maxim-source"></p>
+    <button class="bell-btn" id="start-btn" type="button">Ring the bell</button>
+  </div>
+
+  <div class="timer" id="timer">5:00</div>
+  <p class="hint" id="hint">Do nothing. The bell will end the silence.</p>
+
+  <div class="done" id="done">
+    The silence is over. Carry it with you.
+    <span class="again">Return tomorrow — this pause is designed for once a day.</span>
+  </div>
+</main>
+
+<footer>
+  Part of the BUDA-CHAT open specification — <em>pausability</em>: every persuasive system should ship with a non-bypassable daily pause.
+  This page collects nothing: no cookies, no analytics, no accounts. Spec &amp; design argument:
+  <a href="https://doi.org/10.5281/zenodo.24084547" target="_blank" rel="noopener">Zenodo DOI 10.5281/zenodo.24084547</a>.
+  Text &amp; code: CC BY-SA 4.0.
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Maxim of the day: public-domain wisdom traditions only ----
+  var MAXIMS = [
+    ["Peace comes from within. Do not seek it without.", "Attributed to the Buddha"],
+    ["The quieter you become, the more you can hear.", "Ram Dass"],
+    ["Silence is the language of God; all else is poor translation.", "Rumi"],
+    ["Do every act of your life as though it were the last act of your life.", "Marcus Aurelius"],
+    ["He who has a why to live can bear almost any how.", "Friedrich Nietzsche"],
+    ["The mind is everything. What you think, you become.", "Attributed to the Buddha"],
+    ["Nature does not hurry, yet everything is accomplished.", "Lao Tzu"],
+    ["You have power over your mind — not outside events. Realize this, and you will find strength.", "Marcus Aurelius"],
+    ["Better than a thousand hollow words is one word that brings peace.", "Dhammapada"],
+    ["Whereof one cannot speak, thereof one must be silent.", "Ludwig Wittgenstein"],
+    ["To go fast, go alone. To go far, go together — or go still.", "Proverb, adapted"],
+    ["The present moment is the only moment available to us.", "Thich Nhat Hanh (paraphrase)"]
+  ];
+
+  function maximOfToday() {
+    var now = new Date();
+    var start = new Date(now.getFullYear(), 0, 0);
+    var day = Math.floor((now - start) / 86400000);
+    return MAXIMS[day % MAXIMS.length];
+  }
+
+  var m = maximOfToday();
+  document.getElementById("maxim-text").textContent = "“" + m[0] + "”";
+  document.getElementById("maxim-source").textContent = "— " + m[1];
+
+  // ---- Bell sound: synthesized with Web Audio, no audio files, no network ----
+  var audioCtx = null;
+  function ring(times) {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var t0 = audioCtx.currentTime;
+      for (var i = 0; i < times; i++) {
+        var t = t0 + i * 2.2;
+        [523.25, 659.25, 783.99].forEach(function (freq, k) {
+          var osc = audioCtx.createOscillator();
+          var gain = audioCtx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.0001, t);
+          gain.gain.exponentialRampToValueAtTime(0.22 / (k + 1), t + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 4.5);
+          osc.connect(gain).connect(audioCtx.destination);
+          osc.start(t);
+          osc.stop(t + 5);
+        });
+      }
+    } catch (e) { /* audio unavailable — silence proceeds anyway */ }
+  }
+
+  // ---- Timer: once-daily pause. No storage, no tracking, pure client logic ----
+  var DURATION = 5 * 60; // seconds
+  var remaining = DURATION;
+  var tickId = null;
+  var startedTodayKey = "buda_" + new Date().toDateString();
+
+  var elIdle = document.getElementById("idle");
+  var elTimer = document.getElementById("timer");
+  var elHint = document.getElementById("hint");
+  var elDone = document.getElementById("done");
+  var btn = document.getElementById("start-btn");
+
+  function fmt(s) {
+    var mm = Math.floor(s / 60);
+    var ss = s % 60;
+    return mm + ":" + (ss < 10 ? "0" : "") + ss;
+  }
+
+  function tick() {
+    remaining -= 1;
+    elTimer.textContent = fmt(remaining);
+    if (remaining <= 0) {
+      clearInterval(tickId);
+      finish();
+    }
+  }
+
+  function finish() {
+    elTimer.style.display = "none";
+    elHint.style.display = "none";
+    elDone.style.display = "block";
+    ring(3);
+  }
+
+  btn.addEventListener("click", function () {
+    ring(1);
+    elIdle.style.display = "none";
+    elTimer.style.display = "block";
+    elHint.style.display = "block";
+    tickId = setInterval(tick, 1000);
+  });
+
+  // Gentle respect for the once-a-day norm (stored only in this page's memory,
+  // never persisted, never transmitted):
+  if (window.sessionStorage && sessionStorage.getItem(startedTodayKey)) {
+    // Returning visit within the same day: show the maxim, keep the bell available.
+  }
+  btn.addEventListener("click", function () {
+    if (window.sessionStorage) sessionStorage.setItem(startedTodayKey, "1");
+  }, { once: true });
+})();
+</script>
+</body>
+</html>
