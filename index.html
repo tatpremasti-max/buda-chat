@@ -136,12 +136,22 @@
   var timer = document.getElementById('timer');
   var waterBtn = document.getElementById('waterBtn');
   var audioCtx = null;
+  var bellAudio = null;
   var DURATION = 300;
   var KEY = 'buda_chat_last_ring';
   var waterOn = true;
   var dropTimer = null;
 
-  function ring() {
+  function playBell() {
+    try {
+      if (!bellAudio) bellAudio = new Audio('bell.mp3');
+      bellAudio.currentTime = 0;
+      var p = bellAudio.play();
+      if (p && p.catch) p.catch(function(){ fallbackRing(); });
+    } catch(e) { fallbackRing(); }
+  }
+
+  function fallbackRing() {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       var now = audioCtx.currentTime;
@@ -217,7 +227,7 @@
     }
     localStorage.setItem(KEY, t);
     btn.disabled = true;
-    ring();
+    playBell();
     startWater();
     var left = DURATION;
     timer.textContent = fmt(left);
@@ -226,13 +236,14 @@
       if (left <= 0) {
         clearInterval(iv);
         timer.textContent = 'The bell has rung. The pause is complete.';
-        ring();
+        playBell();
         setTimeout(function(){
           stopWater();
           btn.disabled = false;
           timer.textContent = '';
         }, 4000);
       } else {
+        if (left % 60 === 0) playBell();
         timer.textContent = fmt(left);
       }
     }, 1000);
