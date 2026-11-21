@@ -1,0 +1,14 @@
+{
+  "title": "BUDA-CHAT",
+  "version": "v1.0.0",
+  "creators": [
+    {
+      "name": "Lermontov, Vladimir",
+      "affiliation": "Future+ project",
+      "orcid": "https://orcid.org/0009-0003-1965-9913"
+    }
+  ],
+  "description": "Open-source consent-first AI agent. Live demo: https://tatpremasti-max.github.io/buda-chat/",
+  "license": "CC-BY-4.0",
+  "access_right": "open"
+}
