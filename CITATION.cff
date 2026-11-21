@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use BUDA-CHAT, please cite it as below."
+authors:
+  - family-names: Lermontov
+    given-names: Vladimir
+    orcid: "https://orcid.org/0009-0003-1965-9913"
+title: BUDA-CHAT
+version: 1.0.0
+date-released: "2026-11-21"
+license: CC-BY-4.0
